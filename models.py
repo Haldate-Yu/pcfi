@@ -7,11 +7,17 @@ import torch
 import torch.nn.functional as F
 from torch.nn import ModuleList, Linear, BatchNorm1d
 from torch_geometric.nn import (
+    SGConv,
+    SAGEConv,
     GCNConv,
     GATConv,
+    ChebConv,
     JumpingKnowledge,
 )
+from torch_geometric.nn.models import LabelPropagation
 
+from baselines.gcn_mf import GCNmfConv
+from baselines.pa_gnn import PaGNNConv
 
 
 def get_model(model_name, num_features, num_classes, edge_index, x, args, mask=None):
@@ -19,22 +25,71 @@ def get_model(model_name, num_features, num_classes, edge_index, x, args, mask=N
     torch.cuda.manual_seed(0)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    return GNN(
-        num_features=num_features,
-        num_classes=num_classes,
-        num_layers=args.num_layers,
-        hidden_dim=args.hidden_dim,
-        dropout=args.dropout,
-        conv_type=model_name,
-        jumping_knowledge=args.jk,
-    )
+    if model_name in ["mlp", "cs"]:
+        return MLP(
+            num_features=num_features,
+            num_classes=num_classes,
+            hidden_dim=args.hidden_dim,
+            num_layers=args.num_layers,
+            dropout=args.dropout,
+        )
+    elif model_name == "sgc":
+        return SGC(
+            num_features=num_features,
+            num_classes=num_classes,
+            K=args.num_layers,
+            cached=args.filling_method not in ["parameterization", "learnable_diffusion"],
+        )
+    elif model_name in ["sage", "gcn", "gat"]:
+        return GNN(
+            num_features=num_features,
+            num_classes=num_classes,
+            num_layers=args.num_layers,
+            hidden_dim=args.hidden_dim,
+            dropout=args.dropout,
+            conv_type=model_name,
+            jumping_knowledge=args.jk,
+        )
+    elif model_name == "gcnmf":
+        return GCNmf(
+            num_features=num_features,
+            num_classes=num_classes,
+            hidden_dim=args.hidden_dim,
+            x=x,
+            edge_index=edge_index,
+            dropout=args.dropout,
+        )
+    elif model_name == "pagnn":
+        return PaGNN(
+            num_features=num_features,
+            num_classes=num_classes,
+            hidden_dim=args.hidden_dim,
+            dropout=args.dropout,
+            mask=mask,
+            edge_index=edge_index,
+        )
+    elif model_name == "lp":
+        return LabelPropagation(num_layers=50, alpha=args.lp_alpha)
+    elif model_name == "graphmae":
+        pass
+    else:
+        raise ValueError(f"Model {model_name} not supported")
 
 
+class SGC(torch.nn.Module):
+    def __init__(self, num_features, num_classes, K=2, cached=False):
+        super(SGC, self).__init__()
+        self.conv1 = SGConv(num_features, num_classes, K=K, cached=cached)
+
+    def forward(self, x, edge_index):
+        x = self.conv1(x, edge_index)
+        return torch.nn.functional.log_softmax(x, dim=1)
 
 
 class GNN(torch.nn.Module):
     def __init__(
-        self, num_features, num_classes, hidden_dim, num_layers=3, dropout=0, conv_type="GCN", jumping_knowledge=False,
+            self, num_features, num_classes, hidden_dim, num_layers=3, dropout=0, conv_type="GCN",
+            jumping_knowledge=False,
     ):
         super(GNN, self).__init__()
 
@@ -109,19 +164,98 @@ class GNN(torch.nn.Module):
 
         return x_all
 
+
+class MLP(torch.nn.Module):
+    def __init__(self, num_features, num_classes, hidden_dim, num_layers, dropout):
+        super(MLP, self).__init__()
+        self.dropout = dropout
+
+        self.lins = ModuleList([Linear(num_features, hidden_dim)])
+        self.bns = ModuleList([BatchNorm1d(hidden_dim)])
+        for _ in range(num_layers - 2):
+            self.lins.append(Linear(hidden_dim, hidden_dim))
+            self.bns.append(BatchNorm1d(hidden_dim))
+        self.lins.append(Linear(hidden_dim, num_classes))
+
+    def forward(self, x, edge_index):
+        for lin, bn in zip(self.lins[:-1], self.bns):
+            x = bn(lin(x).relu_())
+            x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.lins[-1](x)
+
+        return torch.nn.functional.log_softmax(x, dim=1)
+
+
+class GCNmf(torch.nn.Module):
+    def __init__(
+            self, num_features, num_classes, hidden_dim, x, edge_index, dropout=0, n_components=5,
+    ):
+        super(GCNmf, self).__init__()
+        self.gc1 = GCNmfConv(
+            in_features=num_features,
+            out_features=hidden_dim,
+            x=x,
+            edge_index=edge_index,
+            n_components=n_components,
+            dropout=dropout,
+        )
+        self.gc2 = GCNConv(hidden_dim, num_classes, dropout)
+        self.dropout = dropout
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        self.gc1.reset_parameters()
+        self.gc2.reset_parameters()
+
+    def forward(self, x, edge_index):
+        x = self.gc1(x, edge_index)
+        x = self.gc2(x, edge_index)
+        return F.log_softmax(x, dim=1)
+
+
+class PaGNN(torch.nn.Module):
+    def __init__(
+            self, num_features, num_classes, hidden_dim, num_layers=2, dropout=0, mask=None, edge_index=None,
+    ):
+        super(PaGNN, self).__init__()
+        # NOTE: It not specified in their paper (https://arxiv.org/pdf/2003.10130.pdf), but the only way for their model to work is to have only the first layer
+        # to be what they describe and the others to be standard GCN layers. Otherwise, the feature matrix would change dimensionality, and it couldn't be
+        # multiplied elmentwise with the mask anymore
+        self.convs = ModuleList([PaGNNConv(num_features, hidden_dim, mask, edge_index)])
+        for i in range(num_layers - 2):
+            self.convs.append(GCNConv(hidden_dim, hidden_dim))
+        self.convs.append(GCNConv(hidden_dim, num_classes))
+        self.num_layers = num_layers
+        self.dropout = dropout
+
+    def forward(self, x, edge_index):
+        for conv in self.convs[:-1]:
+            x = conv(x, edge_index).relu_()
+            x = F.dropout(x, p=self.dropout, training=self.training)
+
+        out = self.convs[-1](x, edge_index)
+
+        return torch.nn.functional.log_softmax(out, dim=1)
+
+
 def get_conv(conv_type, input_dim, output_dim):
-    if conv_type == "gcn":
+    if conv_type == "sage":
+        return SAGEConv(input_dim, output_dim)
+    elif conv_type == "gcn":
         return GCNConv(input_dim, output_dim)
     elif conv_type == "gat":
         return GATConv(input_dim, output_dim, heads=1)
+    elif conv_type == "cheb":
+        return ChebConv(input_dim, output_dim, K=4)
     else:
         raise ValueError(f"Convolution type {conv_type} not supported")
+
 
 class GCNEncoder(torch.nn.Module):
     def __init__(self, in_channels, out_channels):
         super(GCNEncoder, self).__init__()
-        self.conv1 = GCNConv(in_channels, 2*out_channels, cached=True)
-        self.conv2 = GCNConv(2*out_channels, out_channels, cached=True)
+        self.conv1 = GCNConv(in_channels, 2 * out_channels, cached=True)
+        self.conv2 = GCNConv(2 * out_channels, out_channels, cached=True)
 
     def forward(self, x, edge_index):
         x = self.conv1(x, edge_index).relu()

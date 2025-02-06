@@ -78,7 +78,6 @@ def remap_edges(edges: list, mapper: dict) -> list:
 
 
 def set_train_val_test_split_im(seed: int, data: Data, dataset_name: str, split_idx: int = None) -> Data:
-
     if dataset_name in [
         "Cora",
         "CiteSeer",
@@ -102,15 +101,14 @@ def set_train_val_test_split_im(seed: int, data: Data, dataset_name: str, split_
             num_train = 200
             num_val = 1300
 
-
         data = set_uniform_train_val_test_split_by_num(
-            seed=seed, data=data, num_train = num_train, num_val = num_val
+            seed=seed, data=data, num_train=num_train, num_val=num_val
         )
 
     return data
 
-def set_train_val_test_split(seed: int, data: Data, dataset_name: str, split_idx: int = None) -> Data:
 
+def set_train_val_test_split(seed: int, data: Data, dataset_name: str, split_idx: int = None) -> Data:
     if dataset_name in [
         "Cora",
         "CiteSeer",
@@ -123,11 +121,20 @@ def set_train_val_test_split(seed: int, data: Data, dataset_name: str, split_idx
         data = set_per_class_train_val_test_split(
             seed=seed, data=data, num_val=num_val, num_train_per_class=20, split_idx=split_idx,
         )
-    elif dataset_name in ["OGBN-Arxiv"]:
+    elif dataset_name in ["OGBN-Arxiv", "OGBN-Products"]:
         # OGBN datasets have pre-assigned split
         data.train_mask = split_idx["train"]
         data.val_mask = split_idx["valid"]
         data.test_mask = split_idx["test"]
+    elif dataset_name in ["Twitch", "Deezer-Europe", "FB100", "Actor"]:
+        # Datasets from "New Benchmarks for Learning on Non-Homophilous Graphs". They use uniform 50/25/25 split
+        data = set_uniform_train_val_test_split(seed, data, train_ratio=0.5, val_ratio=0.25)
+    elif dataset_name == "Syn-Cora":
+        # Datasets from "Beyond Homophily in Graph Neural Networks: Current Limitations and Effective Designs". They use uniform 25/25/50 split
+        data = set_uniform_train_val_test_split(seed, data, train_ratio=0.25, val_ratio=0.25)
+    elif dataset_name == "MixHopSynthetic":
+        # Datasets from "MixHop: Higher-Order Graph Convolutional Architectures via Sparsified Neighborhood Mixing". They use uniform 33/33/33 split
+        data = set_uniform_train_val_test_split(seed, data, train_ratio=0.33, val_ratio=0.33)
     else:
         raise ValueError(f"We don't know how to split the data for {dataset_name}")
 
@@ -135,9 +142,8 @@ def set_train_val_test_split(seed: int, data: Data, dataset_name: str, split_idx
 
 
 def set_per_class_train_val_test_split(
-    seed: int, data: Data, num_val: int = 1500, num_train_per_class: int = 20, split_idx: int = None,
+        seed: int, data: Data, num_val: int = 1500, num_train_per_class: int = 20, split_idx: int = None,
 ) -> Data:
-
     if split_idx is None:
         random.seed(seed)
         rnd_state = np.random.RandomState(seed)
@@ -182,8 +188,8 @@ def set_uniform_train_val_test_split(seed: int, data: Data, train_ratio: float =
     rnd_state.shuffle(idxs)
 
     train_idx = idxs[:num_train]
-    val_idx = idxs[num_train : num_train + num_val]
-    test_idx = idxs[num_train + num_val :]
+    val_idx = idxs[num_train: num_train + num_val]
+    test_idx = idxs[num_train + num_val:]
 
     train_idx = labeled_nodes[train_idx]
     val_idx = labeled_nodes[val_idx]
@@ -213,8 +219,8 @@ def set_uniform_train_val_test_split_by_num(seed: int, data: Data, num_train: in
     rnd_state.shuffle(idxs)
 
     train_idx = idxs[:num_train]
-    val_idx = idxs[num_train : num_train + num_val]
-    test_idx = idxs[num_train + num_val :]
+    val_idx = idxs[num_train: num_train + num_val]
+    test_idx = idxs[num_train + num_val:]
 
     train_idx = labeled_nodes[train_idx]
     val_idx = labeled_nodes[val_idx]
@@ -226,4 +232,3 @@ def set_uniform_train_val_test_split_by_num(seed: int, data: Data, num_train: in
     data.y[data.y == -1] = 0
 
     return data
-

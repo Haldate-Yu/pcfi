@@ -4,6 +4,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 import torch
 
+
 def train(model, x, train_pos_edge_index, optimizer):
     model.train()
     optimizer.zero_grad()

@@ -5,10 +5,11 @@ Modified by Daeho Um (daehoum1@snu.ac.kr)
 """
 import torch
 
+
 @torch.no_grad()
 def test(model, x, data, logits=None, evaluator=None, inference_loader=None, device="cuda"):
     model.eval()
-    logits =  inference_full_batch(model, x, data.edge_index)
+    logits = inference_full_batch(model, x, data.edge_index)
     accs = []
     for _, mask in data("train_mask", "val_mask", "test_mask"):
         pred = logits[mask].max(1)[1]

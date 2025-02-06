@@ -16,8 +16,9 @@ def pcfi(edge_index, X, feature_mask, num_iterations=None, mask_type=None, alpha
     torch.cuda.manual_seed(0)
     random.seed(0)
     np.random.seed(0)
-    propagation_model = PCFI(num_iterations=num_iterations, alpha = alpha, beta=beta)
+    propagation_model = PCFI(num_iterations=num_iterations, alpha=alpha, beta=beta)
     return propagation_model.propagate(x=X, edge_index=edge_index, mask=feature_mask, mask_type=mask_type)
+
 
 class PCFI(torch.nn.Module):
     def __init__(self, num_iterations: int, alpha: float, beta: float):
@@ -26,7 +27,8 @@ class PCFI(torch.nn.Module):
         self.alpha = alpha
         self.beta = beta
 
-    def propagate(self, x: Tensor, edge_index: Adj, mask: Tensor, mask_type: str, edge_weight: OptTensor = None) -> Tensor:
+    def propagate(self, x: Tensor, edge_index: Adj, mask: Tensor, mask_type: str,
+                  edge_weight: OptTensor = None) -> Tensor:
         torch.manual_seed(0)
         torch.cuda.manual_seed(0)
         torch.backends.cudnn.deterministic = True
@@ -45,7 +47,7 @@ class PCFI(torch.nn.Module):
                 # Diffuse current features
                 out = torch.sparse.mm(adj_c, out)
                 out[mask] = x[mask]
-            f_n2d = f_n2d.repeat(feat_dim,1)
+            f_n2d = f_n2d.repeat(feat_dim, 1)
         else:
             out = torch.zeros_like(x)
             if mask is not None:
@@ -55,8 +57,8 @@ class PCFI(torch.nn.Module):
             for i in range(feat_dim):
                 adj_c = self.compute_edge_weight_c(edge_index, f_n2d[i], nv)
                 for _ in range(self.num_iterations):
-                    out[:,i] = torch.sparse.mm(adj_c, out[:,i].reshape(-1,1)).reshape(-1)
-                    out[mask[:,i],i] = x[mask[:,i],i]
+                    out[:, i] = torch.sparse.mm(adj_c, out[:, i].reshape(-1, 1)).reshape(-1)
+                    out[mask[:, i], i] = x[mask[:, i], i]
         cor = torch.corrcoef(out.T).nan_to_num().fill_diagonal_(0)
         f_n2d = f_n2d.to(out.device)
         a_1 = (self.alpha ** f_n2d.T) * (out - torch.mean(out, dim=0))
@@ -69,7 +71,7 @@ class PCFI(torch.nn.Module):
         nv = feature_mask.shape[0]
         if mask_type == 'structural':
             len_v_0tod_list = []
-            f_n2d = torch.zeros(nv, dtype = torch.int)
+            f_n2d = torch.zeros(nv, dtype=torch.int)
             v_0 = torch.nonzero(feature_mask[:, 0]).view(-1)
             len_v_0tod_list.append(len(v_0))
             v_0_to_now = v_0
@@ -89,10 +91,10 @@ class PCFI(torch.nn.Module):
             print('\n ==== compute f_n2d for {feat_dim} channels ===='.format(feat_dim=feat_dim))
             # for i in tqdm(range(feat_dim), mininterval=2):
             for i in range(feat_dim):
-                v_0 = torch.nonzero(feature_mask[:,i]).view(-1)
+                v_0 = torch.nonzero(feature_mask[:, i]).view(-1)
                 v_0_to_now = v_0
                 f_n2d[i, v_0] = 0
-                d=1
+                d = 1
                 while True:
                     v_d_hop_sub = torch_geometric.utils.k_hop_subgraph(v_0, d, edge_index, num_nodes=nv)[0]
                     v_d = torch.from_numpy(np.setdiff1d(v_d_hop_sub.cpu(), v_0_to_now.cpu())).to(v_0.device)
@@ -112,12 +114,10 @@ class PCFI(torch.nn.Module):
         d_row = f_n2d[row]
         d_col = f_n2d[col]
         edge_weight_c = (self.alpha ** (d_col - d_row + 1)).to(edge_index.device)
-        deg_W = scatter_add(edge_weight_c, row, dim_size= f_n2d.shape[0])
+        deg_W = scatter_add(edge_weight_c, row, dim_size=f_n2d.shape[0])
         deg_W_inv = deg_W.pow_(-1.0)
         deg_W_inv.masked_fill_(deg_W_inv == float("inf"), 0)
         A_Dinv = edge_weight_c * deg_W_inv[row]
-        adj = torch.sparse.FloatTensor(edge_index, values= A_Dinv, size=[n_nodes, n_nodes]).to(edge_index.device)
+        adj = torch.sparse.FloatTensor(edge_index, values=A_Dinv, size=[n_nodes, n_nodes]).to(edge_index.device)
 
         return adj
-
-
