@@ -11,6 +11,7 @@ import logging
 import time
 from data_loading import get_dataset
 from data_utils import set_train_val_test_split
+from graphmae import build_model
 from utils import get_missing_feature_mask
 from models import get_model
 from seeds import seeds
@@ -84,8 +85,10 @@ parser.add_argument("--gpu_idx", type=int, help="Indexes of gpu to run program o
 parser.add_argument(
     "--log", type=str, help="Log Level", default="INFO", choices=["DEBUG", "INFO", "WARNING"],
 )
+parser.add_argument("--pretrained_model_path", type=str)
 
-def run(args):
+
+def run(args, graphmae_args=None):
     logger.info(args)
 
     torch.manual_seed(0)
@@ -150,14 +153,24 @@ def run(args):
                 rate=args.missing_rate, n_nodes=n_nodes, n_features=n_features, seed=seed, type=args.mask_type,
             ).to(device)
             x = data.x.clone()
-            x[~missing_feature_mask] = float("nan")
+            pretrained_gmae = None
+            if args.model == "graphmae":
+                graphMAE = build_model(graphmae_args)
+                # loading pre-trained model
+                graphMAE.load_state_dict(torch.load(graphmae_args.pretrained_model_path))
+                pretrained_gmae = graphMAE.to(device)
+                # todo GMAE missing method
+
+
+            else:
+                x[~missing_feature_mask] = float("nan")
 
             logger.debug("Starting feature filling")
             start = time.time()
             # todo fill with GMAE
             filled_features = (
                 filling(args.filling_method, data.edge_index, x, missing_feature_mask, args.num_iterations,
-                        args.mask_type, args.alpha, args.beta)
+                        args.mask_type, args.alpha, args.beta, pretrained_gmae)
                 if args.model not in ["gcnmf", "pagnn"]
                 else torch.full_like(x, float("nan"))
             )
@@ -211,4 +224,14 @@ if __name__ == "__main__":
     print(args)
     logger = logging.getLogger(__name__)
     logger.setLevel(level=getattr(logging, args.log.upper(), None))
-    run(args)
+    # load graphMAE args
+    if args.filling_method == "graphmae":
+        from graphmae.utils import build_args, load_best_configs
+
+        graphmae_args = build_args()
+        if graphmae_args.use_cfg:
+            args = load_best_configs(args, "configs.yml")
+        graphmae_args.pretrained_model_path = args.pretrained_model_path
+        run(args, graphmae_args)
+    else:
+        run(args, None)

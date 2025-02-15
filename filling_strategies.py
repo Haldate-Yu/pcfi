@@ -48,7 +48,12 @@ def pcfi(edge_index, X, feature_mask, num_iterations=None, mask_type=None, alpha
     return propagation_model.propagate(x=X, edge_index=edge_index, mask=feature_mask, mask_type=mask_type)
 
 
-def filling(filling_method, edge_index, X, feature_mask, num_iterations=None, mask_type=None, alpha=None, beta=None):
+def GraphMAE(model, edge_index, X, feature_mask, num_iterations=None, mask_type=None):
+    return model.missing_attr_prediction(X, edge_index, feature_mask, mask_type)
+
+
+def filling(filling_method, edge_index, X, feature_mask, num_iterations=None, mask_type=None, alpha=None, beta=None,
+            pretrained_model=None):
     if filling_method == "random":
         X_reconstructed = random_filling(X)
     elif filling_method == "zero":
@@ -62,6 +67,8 @@ def filling(filling_method, edge_index, X, feature_mask, num_iterations=None, ma
     elif filling_method == "pcfi":
         X_reconstructed = pcfi(edge_index, X, feature_mask, num_iterations, mask_type,
                                alpha, beta)
+    elif filling_method == "GraphMAE":
+        X_reconstructed = GraphMAE(pretrained_model, edge_index, X, feature_mask, num_iterations, mask_type)
     else:
         raise ValueError(f"{filling_method} method not implemented")
     return X_reconstructed

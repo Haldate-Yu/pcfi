@@ -10,7 +10,7 @@ from torch_geometric.nn.dense.linear import Linear
 from torch_geometric.typing import Adj, OptPairTensor, OptTensor, Size, SparseTensor
 from torch_geometric.utils import softmax
 
-from utils import create_activation
+from graphmae.utils import create_activation
 
 
 class GAT(nn.Module):

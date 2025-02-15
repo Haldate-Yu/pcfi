@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+from torch import Tensor
+from torch_geometric.typing import Adj, OptTensor
 from functools import partial
 from itertools import chain
 from torch_geometric.utils import add_self_loops
@@ -230,6 +232,34 @@ class PreModel(nn.Module):
 
         loss = self.criterion(x_rec, x_init)
         return loss
+
+    def missing_attr_prediction(self, x: Tensor, edge_index: Adj, mask: Tensor, mask_type: str):
+        use_x = x.clone()
+
+        if self._drop_edge_rate > 0:
+            use_edge_index, masked_edges = dropout_edge(edge_index, self._drop_edge_rate)
+            use_edge_index = add_self_loops(use_edge_index)[0]
+        else:
+            use_edge_index = edge_index
+
+        enc_rep, all_hidden = self.encoder(use_x, use_edge_index, return_hidden=True)
+        if self._concat_hidden:
+            enc_rep = torch.cat(all_hidden, dim=1)
+
+        # ---- attribute reconstruction ----
+        rep = self.encoder_to_decoder(enc_rep)
+
+        if self._decoder_type not in ("mlp", "linear"):
+            # * remask, re-mask
+            rep[mask] = 0
+
+        if self._decoder_type in ("mlp", "linear"):
+            recon = self.decoder(rep)
+        else:
+            recon = self.decoder(rep, use_edge_index)
+
+        x_rec = recon[mask]
+        return x_rec
 
     def embed(self, x, edge_index):
         rep = self.encoder(x, edge_index)
