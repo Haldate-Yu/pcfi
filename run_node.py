@@ -154,7 +154,7 @@ def run(args, graphmae_args=None):
             ).to(device)
             x = data.x.clone()
             pretrained_gmae = None
-            if args.model == "graphmae":
+            if args.filling_method == "graphmae":
                 graphMAE = build_model(graphmae_args)
                 # loading pre-trained model
                 graphMAE.load_state_dict(torch.load(graphmae_args.pretrained_model_path))
