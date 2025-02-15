@@ -67,7 +67,7 @@ def filling(filling_method, edge_index, X, feature_mask, num_iterations=None, ma
     elif filling_method == "pcfi":
         X_reconstructed = pcfi(edge_index, X, feature_mask, num_iterations, mask_type,
                                alpha, beta)
-    elif filling_method == "GraphMAE":
+    elif filling_method == "graphmae":
         X_reconstructed = GraphMAE(pretrained_model, edge_index, X, feature_mask, num_iterations, mask_type)
     else:
         raise ValueError(f"{filling_method} method not implemented")

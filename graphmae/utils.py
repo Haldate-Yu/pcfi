@@ -136,6 +136,13 @@ def build_args():
 
     # for missing feature graphs
     mae_parser.add_argument(
+        "--filling_method",
+        type=str,
+        help="Method to solve the missing feature problem",
+        default="feature_propagation",
+        choices=["random", "zero", "mean", "neighborhood_mean", "feature_propagation", "pcfi", "graphmae"],
+    )
+    mae_parser.add_argument(
         "--feature_mask_type", type=str, help="Type of missing feature mask", default="uniform",
         choices=["uniform", "structural"],
     )
