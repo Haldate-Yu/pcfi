@@ -235,6 +235,7 @@ class PreModel(nn.Module):
 
     def missing_attr_prediction(self, x: Tensor, edge_index: Adj, mask: Tensor, mask_type: str):
         use_x = x.clone()
+        return_x = x.clone()
 
         if self._drop_edge_rate > 0:
             use_edge_index, masked_edges = dropout_edge(edge_index, self._drop_edge_rate)
@@ -251,14 +252,17 @@ class PreModel(nn.Module):
 
         if self._decoder_type not in ("mlp", "linear"):
             # * remask, re-mask
-            rep[mask] = 0
+            rep[~mask] = 0
 
         if self._decoder_type in ("mlp", "linear"):
             recon = self.decoder(rep)
         else:
             recon = self.decoder(rep, use_edge_index)
 
-        return recon
+        # only fill masked nodes
+        return_x[~mask] = recon[~mask]
+
+        return return_x
 
     def embed(self, x, edge_index):
         rep = self.encoder(x, edge_index)
