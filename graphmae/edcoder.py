@@ -258,8 +258,7 @@ class PreModel(nn.Module):
         else:
             recon = self.decoder(rep, use_edge_index)
 
-        x_rec = recon[mask]
-        return x_rec
+        return recon
 
     def embed(self, x, edge_index):
         rep = self.encoder(x, edge_index)

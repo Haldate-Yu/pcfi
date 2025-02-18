@@ -149,8 +149,8 @@ def build_args():
     mae_parser.add_argument("--feature_missing_rate", type=float, help="Rate of node features missing", default=0.99)
 
     mae_parser.add_argument("--pretrained_model_path", type=str)
-    args = mae_parser.parse_args()
-    return args
+    mae_args = mae_parser.parse_args()
+    return mae_args
 
 
 def load_best_configs(args, path):

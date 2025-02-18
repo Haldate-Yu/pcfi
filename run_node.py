@@ -155,12 +155,13 @@ def run(args, graphmae_args=None):
             x = data.x.clone()
             pretrained_gmae = None
             if args.filling_method == "graphmae":
+                graphmae_args.num_features = n_features
                 graphMAE = build_model(graphmae_args)
-                # loading pre-trained model
-                graphMAE.load_state_dict(torch.load(graphmae_args.pretrained_model_path))
+                # todo loading pre-trained model
+                graphMAE.load_state_dict(torch.load(graphmae_args.pretrained_model_path, weights_only=True), strict=False)
                 pretrained_gmae = graphMAE.to(device)
                 # todo GMAE missing method
-
+                x[~missing_feature_mask] = float(0)
 
             else:
                 x[~missing_feature_mask] = float("nan")
@@ -230,7 +231,7 @@ if __name__ == "__main__":
 
         graphmae_args = build_args()
         if graphmae_args.use_cfg:
-            args = load_best_configs(args, "configs.yml")
+            graphmae_args = load_best_configs(args, "configs.yml")
         graphmae_args.pretrained_model_path = args.pretrained_model_path
         run(args, graphmae_args)
     else:
