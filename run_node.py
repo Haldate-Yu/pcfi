@@ -158,10 +158,19 @@ def run(args, graphmae_args=None):
                 graphmae_args.num_features = n_features
                 graphMAE = build_model(graphmae_args)
                 # todo loading pre-trained model
-                graphMAE.load_state_dict(torch.load(graphmae_args.pretrained_model_path, weights_only=True), strict=False)
+                graphMAE.load_state_dict(torch.load(graphmae_args.pretrained_model_path, weights_only=True),
+                                         strict=False)
                 pretrained_gmae = graphMAE.to(device)
-                # todo GMAE missing method
-                x[~missing_feature_mask] = float(0)
+                # GMAE feature init method
+                # todo define as a refinement
+
+                if graphmae_args.feature_init_type == "zero":
+                    x[~missing_feature_mask] = float(0)
+                elif graphmae_args.feature_init_type == "random":
+                    init_x = torch.randn_like(x)
+                    x[~missing_feature_mask] = init_x[~missing_feature_mask]
+                else:
+                    raise ValueError(f"{args.feature_init_type} not implemented!")
 
             else:
                 x[~missing_feature_mask] = float("nan")

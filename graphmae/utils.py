@@ -143,11 +143,16 @@ def build_args():
         choices=["random", "zero", "mean", "neighborhood_mean", "feature_propagation", "pcfi", "graphmae"],
     )
     mae_parser.add_argument(
+        "--feature_init_type", type=str, help="Type of missing feature mask", default="zero",
+        choices=["zero", "random"],
+    )
+    mae_parser.add_argument(
         "--feature_mask_type", type=str, help="Type of missing feature mask", default="uniform",
         choices=["uniform", "structural"],
     )
     mae_parser.add_argument("--feature_missing_rate", type=float, help="Rate of node features missing", default=0.99)
 
+    # load pretrained model
     mae_parser.add_argument("--pretrained_model_path", type=str)
     mae_args = mae_parser.parse_args()
     return mae_args
