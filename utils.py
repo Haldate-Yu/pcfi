@@ -3,6 +3,8 @@ Copyright 2020 Twitter, Inc.
 SPDX-License-Identifier: Apache-2.0
 Modified by Daeho Um (daehoum1@snu.ac.kr)
 """
+import os
+import csv
 import torch
 from torch_scatter import scatter_add
 
@@ -47,7 +49,54 @@ def get_symmetrically_normalized_adjacency(edge_index, n_nodes):
 
 
 def save_node_results(args, mae_args, test_acc_mean, test_acc_std):
-    pass
+    result_dir = './results/'
+    if not os.path.exists(result_dir):
+        print("Creating directory for results ...")
+        os.makedirs(result_dir)
+
+    node_result_dir = os.path.join(result_dir, 'node_results/')
+    if not os.path.exists(node_result_dir):
+        print("Creating directory for node results ...")
+        os.makedirs(node_result_dir)
+
+    # parsing args
+    result_file_name = node_result_dir + args.dataset + '_' + args.mask_type + '_' + str(args.missing_rate) + '.csv'
+
+    if args.filling_method == 'graphmae':
+        header_list = ["filling_method", "downstream_model", "n_runs", "num_layers", "hidden_dim", "jk",
+                       "encoder", "decoder", "num_heads", "num_layers", "num_hidden", "residual", "sce_coef", "pooling",
+                       "acc_mean", "acc_std"]
+    elif args.filling_method == 'pcfi':
+        header_list = ["filling_method", "downstream_model", "n_runs", "num_layers", "hidden_dim", "jk",
+                       "alpha", "beta",
+                       "acc_mean", "acc_std"]
+    else:
+        header_list = ["filling_method", "downstream_model", "n_runs", "num_layers", "hidden_dim", "jk",
+                       "acc_mean", "acc_std"]
+    # saving results
+    with open(result_file_name, 'a+') as f:
+        f.seek(0)
+        val_header = f.read(7)
+        if val_header != 'filling':
+            dw = csv.DictWriter(f, delimiter=',', fieldnames=header_list)
+            dw.writeheader()
+
+        if args.filling_method == 'graphmae':
+            line = "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {:.5f}, {:.5f}\n".format(
+                args.filling_method, args.model, args.n_runs, args.num_layers, args.hidden_dim, args.jk,
+                mae_args.encoder, mae_args.decoder, mae_args.num_heads, mae_args.num_layers, mae_args.num_hidden,
+                mae_args.residual, mae_args.alpha_l, mae_args.pooling,
+                test_acc_mean, test_acc_std)
+        elif args.filling_method == 'pcfi':
+            line = "{}, {}, {}, {}, {}, {}, {}, {}, {:.5f}, {:.5f}\n".format(
+                args.filling_method, args.model, args.n_runs, args.num_layers, args.hidden_dim, args.jk,
+                args.alpha, args.beta,
+                test_acc_mean, test_acc_std)
+        else:
+            line = "{}, {}, {}, {}, {}, {}, {:.5f}, {:.5f}\n".format(
+                args.filling_method, args.model, args.n_runs, args.num_layers, args.hidden_dim, args.jk,
+                test_acc_mean, test_acc_std)
+        f.write(line)
 
 
 def save_link_results(args, mae_args, test_acc_mean, test_acc_std):

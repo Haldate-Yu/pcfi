@@ -1,3 +1,4 @@
+import os
 import argparse
 import torch
 import torch.nn as nn
@@ -82,30 +83,30 @@ def build_args():
     mae_parser.add_argument("--dataset", type=str, default="cora")
     mae_parser.add_argument("--device", type=int, default=-1)
     mae_parser.add_argument("--max_epoch", type=int, default=200,
-                        help="number of training epochs")
+                            help="number of training epochs")
     mae_parser.add_argument("--warmup_steps", type=int, default=-1)
 
     mae_parser.add_argument("--num_heads", type=int, default=4,
-                        help="number of hidden attention heads")
+                            help="number of hidden attention heads")
     mae_parser.add_argument("--num_out_heads", type=int, default=1,
-                        help="number of output attention heads")
+                            help="number of output attention heads")
     mae_parser.add_argument("--num_layers", type=int, default=2,
-                        help="number of hidden layers")
+                            help="number of hidden layers")
     mae_parser.add_argument("--num_hidden", type=int, default=256,
-                        help="number of hidden units")
+                            help="number of hidden units")
     mae_parser.add_argument("--residual", action="store_true", default=False,
-                        help="use residual connection")
+                            help="use residual connection")
     mae_parser.add_argument("--in_drop", type=float, default=.2,
-                        help="input feature dropout")
+                            help="input feature dropout")
     mae_parser.add_argument("--attn_drop", type=float, default=.1,
-                        help="attention dropout")
+                            help="attention dropout")
     mae_parser.add_argument("--norm", type=str, default=None)
     mae_parser.add_argument("--lr", type=float, default=0.005,
-                        help="learning rate")
+                            help="learning rate")
     mae_parser.add_argument("--weight_decay", type=float, default=5e-4,
-                        help="weight decay")
+                            help="weight decay")
     mae_parser.add_argument("--negative_slope", type=float, default=0.2,
-                        help="the negative slope of leaky relu for GAT")
+                            help="the negative slope of leaky relu for GAT")
     mae_parser.add_argument("--activation", type=str, default="prelu")
     mae_parser.add_argument("--mask_rate", type=float, default=0.5)
     mae_parser.add_argument("--drop_edge_rate", type=float, default=0.0)
@@ -175,3 +176,17 @@ def load_best_configs(args, path):
         setattr(args, k, v)
     print("------ Use best configs ------")
     return args
+
+
+def load_pretrained_model(mae_args):
+    pretrained_model_dir = "./pretrain_gmae/"
+    file_name = mae_args.dataset + "_" + mae_args.encoder + "_" + mae_args.decoder + \
+                "_" + mae_args.feature_init_type + "_" + mae_args.feature_mask_type + \
+                "_" + str(mae_args.feature_missing_rate) + ".pt"
+    model_path = pretrained_model_dir + file_name
+    if not os.path.exists(model_path):
+        logging.info("Pretrained model not found")
+        return None
+    logging.info("Loading pretrained model from " + model_path)
+    model = torch.load(model_path)
+    return model
