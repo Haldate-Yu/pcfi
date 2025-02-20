@@ -6,6 +6,7 @@ Modified by Daeho Um (daehoum1@snu.ac.kr)
 import torch
 from torch_scatter import scatter_add
 
+
 def get_missing_feature_mask(rate, n_nodes, n_features, seed, type="uniform"):
     """ 
     Return mask of shape [n_nodes, n_features] indicating whether each feature is present or missing.
@@ -44,3 +45,10 @@ def get_symmetrically_normalized_adjacency(edge_index, n_nodes):
 
     return edge_index, DAD
 
+
+def save_node_results(args, mae_args, test_acc_mean, test_acc_std):
+    pass
+
+
+def save_link_results(args, mae_args, test_acc_mean, test_acc_std):
+    pass

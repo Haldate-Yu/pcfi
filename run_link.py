@@ -85,6 +85,9 @@ def run(args):
         x = data.x.clone()
         x[~missing_feature_mask] = float("nan")
         # todo fill with GMAE
+
+
+
         # filled_features = pcfi(data.train_pos_edge_index, x, missing_feature_mask, args.num_iterations, args.mask_type,
         #                        args.alpha, args.beta).to(device)
         filled_features = (
