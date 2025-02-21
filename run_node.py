@@ -12,7 +12,8 @@ import time
 from data_loading import get_dataset
 from data_utils import set_train_val_test_split
 from graphmae import build_model
-from utils import get_missing_feature_mask
+from chem.model import GNN_graphpred
+from utils import get_missing_feature_mask, save_node_results
 from models import get_model
 from seeds import seeds
 from evaluation import test
@@ -157,7 +158,7 @@ def run(args, graphmae_args=None):
             if args.filling_method == "graphmae":
                 graphmae_args.num_features = n_features
                 graphMAE = build_model(graphmae_args)
-                # todo loading pre-trained model
+                # loading pre-trained model
                 model_params = graphMAE.state_dict()
                 print("original model params")
                 for model_key, model_value in model_params.items():
@@ -183,8 +184,10 @@ def run(args, graphmae_args=None):
                     raise ValueError(f"{args.feature_init_type} not implemented!")
             elif args.filling_method == "graphmae-t":
                 # todo load transfer learning graphMAE
-
-                pass
+                model = GNN_graphpred(graphmae_args.num_layer, graphmae_args.emb_dim, num_classes, JK=graphmae_args.JK,
+                                      drop_ratio=graphmae_args.dropout_ratio,
+                                      graph_pooling=graphmae_args.graph_pooling, gnn_type=graphmae_args.gnn_type)
+                model.from_pretrained(graphmae_args.pretrained_model_path)
             else:
                 x[~missing_feature_mask] = float("nan")
 
@@ -239,7 +242,8 @@ def run(args, graphmae_args=None):
 
     test_acc_mean, test_acc_std = np.mean(test_accs), np.std(test_accs)
     print(f"Test Accuracy: {test_acc_mean * 100:.2f}% +- {test_acc_std * 100:.2f}")
-    # todo: save to files
+    # save to file
+    save_node_results(args, graphmae_args, test_acc_mean, test_acc_std)
 
 
 if __name__ == "__main__":
@@ -254,6 +258,11 @@ if __name__ == "__main__":
         graphmae_args = build_args()
         if graphmae_args.use_cfg:
             graphmae_args = load_best_configs(args, "configs.yml")
+        graphmae_args.pretrained_model_path = args.pretrained_model_path
+        run(args, graphmae_args)
+    elif args.filling_method == "graphmae-t":
+        from chem.util import load_args
+        graphmae_args = load_args()
         graphmae_args.pretrained_model_path = args.pretrained_model_path
         run(args, graphmae_args)
     else:
