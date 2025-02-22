@@ -12,7 +12,7 @@ from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
 from data_utils import keep_only_largest_connected_component
 
-DATA_PATH = "data"
+DATA_PATH = "../data"
 
 
 def get_dataset(name: str, use_lcc: bool = True, homophily=None):

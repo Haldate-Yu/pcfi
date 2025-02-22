@@ -169,7 +169,7 @@ def main():
     dataset_name = args.dataset
     # set up dataset and transform function.
     # dataset = MoleculeDataset("dataset/" + args.dataset, dataset=args.dataset, transform = MaskAtom(num_atom_type = 119, num_edge_type = 5, mask_rate = args.mask_rate, mask_edge=args.mask_edge))
-    dataset = MoleculeDataset("dataset/" + dataset_name, dataset=dataset_name)
+    dataset = MoleculeDataset("../../data/" + dataset_name, dataset=dataset_name)
 
     # loader = DataLoaderMasking(dataset, batch_size=args.batch_size, shuffle=True, num_workers = args.num_workers)
     loader = DataLoaderMaskingPred(dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers,

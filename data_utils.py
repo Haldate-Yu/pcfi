@@ -10,7 +10,7 @@ import torch
 from torch_geometric.data import Data, InMemoryDataset
 from utils import get_mask
 
-DATA_PATH = "data"
+DATA_PATH = "../data"
 
 
 def keep_only_largest_connected_component(dataset):
