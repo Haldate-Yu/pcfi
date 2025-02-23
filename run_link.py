@@ -43,6 +43,13 @@ parser.add_argument(
     "--mask_type", type=str, help="Type of missing feature mask", default="structural",
     choices=["uniform", "structural"],
 )
+parser.add_argument(
+    "--filling_method",
+    type=str,
+    help="Method to solve the missing feature problem",
+    default="feature_propagation",
+    choices=["random", "zero", "mean", "neighborhood_mean", "feature_propagation", "pcfi", "graphmae"],
+)
 parser.add_argument("--gpu_idx", type=int, help="Indexes of gpu to run program on", default=0)
 parser.add_argument("--missing_rate", type=float, help="Rate of node features missing", default=0.995)
 parser.add_argument(
@@ -56,7 +63,10 @@ parser.add_argument("--epochs", type=int, help="Max number of epochs", default=1
 parser.add_argument("--n_runs", type=int, help="Max number of runs", default=10)
 parser.add_argument("--hidden_dim", type=int, help="Hidden dimension of model", default=64)
 parser.add_argument("--jk", action="store_true", help="Whether to use the jumping knowledge scheme")
-
+parser.add_argument(
+    "--log", type=str, help="Log Level", default="INFO", choices=["DEBUG", "INFO", "WARNING"],
+)
+parser.add_argument("--pretrained_model_path", type=str)
 
 def run(args, graphmae_args=None):
     device = torch.device(
@@ -127,8 +137,6 @@ def run(args, graphmae_args=None):
         filled_features = (
             filling(args.filling_method, data.train_pos_edge_index, x, missing_feature_mask, args.num_iterations,
                     args.mask_type, args.alpha, args.beta, pretrained_gmae).to(device)
-            if args.model not in ["gcnmf", "pagnn"]
-            else torch.full_like(x, float("nan"))
         )
 
         data = data.to(device)
@@ -153,7 +161,7 @@ def run(args, graphmae_args=None):
     test_ap_mean, test_ap_std = np.mean(aps), np.std(aps)
 
     print(f"AUC Accuracy: {test_auc_mean * 100:.2f} ± {test_auc_std * 100:.2f}")
-    print(f"AP Accuracy: {test_ap_mean * 100:.2f} ± {test_ap_std * 100:.2f}")
+    print(f"AP Accuracy: {test_ap_mean * 100:.2f} ± {test_ap_std * 100:.2f}\n")
     # save to files
     save_link_results(args, graphmae_args, test_auc_mean, test_auc_std, test_ap_mean, test_ap_std)
 

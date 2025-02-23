@@ -246,7 +246,7 @@ def run(args, graphmae_args=None):
         train_times.append(time.time() - train_start)
 
     test_acc_mean, test_acc_std = np.mean(test_accs), np.std(test_accs)
-    print(f"Test Accuracy: {test_acc_mean * 100:.2f} ± {test_acc_std * 100:.2f}")
+    print(f"Test Accuracy: {test_acc_mean * 100:.2f} ± {test_acc_std * 100:.2f}\n")
     # save to file
     save_node_results(args, graphmae_args, test_acc_mean, test_acc_std)
 

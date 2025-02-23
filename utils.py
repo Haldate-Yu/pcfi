@@ -122,15 +122,15 @@ def save_link_results(args, mae_args, test_auc_mean, test_auc_std, test_ap_mean,
                         str(args.missing_rate) + '.csv')
 
     if args.filling_method == 'graphmae':
-        header_list = ["filling_method", "downstream_model", "n_runs", "num_layers", "hidden_dim", "jk",
+        header_list = ["filling_method", "downstream_model", "n_runs", "hidden_dim", "jk",
                        "encoder", "decoder", "num_heads", "num_layers", "num_hidden", "residual", "sce_coef", "pooling",
                        "auc_mean", "auc_std", "ap_mean", "ap_std"]
     elif args.filling_method == 'pcfi':
-        header_list = ["filling_method", "downstream_model", "n_runs", "num_layers", "hidden_dim", "jk",
+        header_list = ["filling_method", "downstream_model", "n_runs", "hidden_dim", "jk",
                        "alpha", "beta",
                        "acc_mean", "acc_std", "ap_mean", "ap_std"]
     else:
-        header_list = ["filling_method", "downstream_model", "n_runs", "num_layers", "hidden_dim", "jk",
+        header_list = ["filling_method", "downstream_model", "n_runs", "hidden_dim", "jk",
                        "acc_mean", "acc_std", "ap_mean", "ap_std"]
     # saving results
     with open(result_file_name, 'a+') as f:
@@ -141,18 +141,18 @@ def save_link_results(args, mae_args, test_auc_mean, test_auc_std, test_ap_mean,
             dw.writeheader()
 
         if args.filling_method == 'graphmae':
-            line = "{}, 'GAE', {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {:.5f}, {:.5f}, {:.5f}, {:.5f}\n".format(
-                args.filling_method, args.n_runs, args.num_layers, args.hidden_dim, args.jk,
+            line = "{}, 'GAE', {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {:.5f}, {:.5f}, {:.5f}, {:.5f}\n".format(
+                args.filling_method, args.n_runs, args.hidden_dim, args.jk,
                 mae_args.encoder, mae_args.decoder, mae_args.num_heads, mae_args.num_layers, mae_args.num_hidden,
                 mae_args.residual, mae_args.alpha_l, mae_args.pooling,
                 test_auc_mean, test_auc_std, test_ap_mean, test_ap_std)
         elif args.filling_method == 'pcfi':
-            line = "{}, 'GAE', {}, {}, {}, {}, {}, {}, {:.5f}, {:.5f}, {:.5f}, {:.5f}\n".format(
-                args.filling_method, args.n_runs, args.num_layers, args.hidden_dim, args.jk,
+            line = "{}, 'GAE', {}, {}, {}, {}, {}, {:.5f}, {:.5f}, {:.5f}, {:.5f}\n".format(
+                args.filling_method, args.n_runs, args.hidden_dim, args.jk,
                 args.alpha, args.beta,
                 test_auc_mean, test_auc_std, test_ap_mean, test_ap_std)
         else:
-            line = "{}, 'GAE', {}, {}, {}, {}, {:.5f}, {:.5f}, {:.5f}, {:.5f}\n".format(
-                args.filling_method, args.n_runs, args.num_layers, args.hidden_dim, args.jk,
+            line = "{}, 'GAE', {}, {}, {}, {:.5f}, {:.5f}, {:.5f}, {:.5f}\n".format(
+                args.filling_method, args.n_runs, args.hidden_dim, args.jk,
                 test_auc_mean, test_auc_std, test_ap_mean, test_ap_std)
         f.write(line)
