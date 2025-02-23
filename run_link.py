@@ -61,25 +61,23 @@ def run(args, graphmae_args=None):
         else "cpu"
     )
 
-    torch.manual_seed(0)
-    torch.cuda.manual_seed(0)
-    torch.cuda.manual_seed_all(0)
-    np.random.seed(0)
-    random.seed(0)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-
     dataset, evaluator = get_dataset(name=args.dataset_name)
     n_nodes, n_features = dataset.data.x.shape
     aucs, aps = [], []
 
     for seed in tqdm(seeds[: args.n_runs]):
-
-        dataset, evaluator = get_dataset(name=args.dataset_name)
-        data = dataset.data
+        # setting seed
+        random.seed(seed)
+        np.random.seed(seed)
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+        dataset, evaluator = get_dataset(name=args.dataset_name)
+        data = dataset.data
+
         data = train_test_split_edges(data, val_ratio=0.05, test_ratio=0.1).to(device)
         missing_feature_mask = get_missing_feature_mask(
             rate=args.missing_rate, n_nodes=n_nodes, n_features=n_features, seed=seed, type=args.mask_type,
@@ -167,6 +165,12 @@ if __name__ == "__main__":
         graphmae_args = build_args()
         if graphmae_args.use_cfg:
             graphmae_args = load_best_configs(args, "configs.yml")
+        graphmae_args.pretrained_model_path = args.pretrained_model_path
+        run(args, graphmae_args)
+    elif args.filling_method == "graphmae-t":
+        from chem.util import load_args
+
+        graphmae_args = load_args()
         graphmae_args.pretrained_model_path = args.pretrained_model_path
         run(args, graphmae_args)
     else:

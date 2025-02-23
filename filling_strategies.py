@@ -49,7 +49,7 @@ def pcfi(edge_index, X, feature_mask, num_iterations=None, mask_type=None, alpha
 
 
 def GraphMAE(model, edge_index, X, feature_mask, num_iterations=None, mask_type=None):
-    mask_node_ids = torch.where(feature_mask.sum(dim=1) == 0)[0]
+    mask_node_ids = torch.where(feature_mask.sum(dim=1) > 0)[0]
     node_mask = torch.ones(X.shape[0], dtype=torch.bool)
     node_mask[mask_node_ids] = False
     # return reconstructed_X as filled

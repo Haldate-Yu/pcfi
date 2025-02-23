@@ -92,13 +92,6 @@ parser.add_argument("--pretrained_model_path", type=str)
 def run(args, graphmae_args=None):
     logger.info(args)
 
-    torch.manual_seed(0)
-    torch.cuda.manual_seed(0)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    np.random.seed(0)
-    random.seed(0)
-
     device = torch.device(
         f"cuda:{args.gpu_idx}"
         if torch.cuda.is_available() else "cpu"
@@ -109,33 +102,41 @@ def run(args, graphmae_args=None):
     n_nodes, n_features = dataset.data.x.shape
     test_accs, best_val_accs, train_times = [], [], []
 
-    train_loader = (
-        NeighborSampler(
-            dataset.data.edge_index,
-            node_idx=split_idx["train"],
-            sizes=[15, 10, 5][: args.num_layers],
-            batch_size=args.batch_size,
-            shuffle=True,
-            num_workers=12,
-        )
-        if args.graph_sampling
-        else None
-    )
-    # Setting `sizes` to -1 simply loads all the neighbors for each node. We can do this while evaluating
-    # as we first compute the representation of all nodes after the first layer (in batches), then for the second layer, and so on
-    inference_loader = (
-        NeighborSampler(
-            dataset.data.edge_index, node_idx=None, sizes=[-1], batch_size=4096, shuffle=False, num_workers=12,
-        )
-        if args.graph_sampling
-        else None
-    )
-
     for seed in seeds[: args.n_runs]:
+        # setting seed
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        np.random.seed(seed)
+        random.seed(seed)
+
+        train_loader = (
+            NeighborSampler(
+                dataset.data.edge_index,
+                node_idx=split_idx["train"],
+                sizes=[15, 10, 5][: args.num_layers],
+                batch_size=args.batch_size,
+                shuffle=True,
+                num_workers=12,
+            )
+            if args.graph_sampling
+            else None
+        )
+        # Setting `sizes` to -1 simply loads all the neighbors for each node. We can do this while evaluating
+        # as we first compute the representation of all nodes after the first layer (in batches), then for the second layer, and so on
+        inference_loader = (
+            NeighborSampler(
+                dataset.data.edge_index, node_idx=None, sizes=[-1], batch_size=4096, shuffle=False, num_workers=12,
+            )
+            if args.graph_sampling
+            else None
+        )
+
         num_classes = dataset.num_classes
-        data = set_train_val_test_split(
-            seed=seed, data=dataset.data, split_idx=split_idx, dataset_name=args.dataset_name,
-        ).to(device)
+        data = (set_train_val_test_split(
+            seed=seed, data=dataset.data, split_idx=split_idx, dataset_name=args.dataset_name,)
+                .to(device))
         train_start = time.time()
         if args.model == "lp":
             model = get_model(
@@ -253,15 +254,21 @@ if __name__ == "__main__":
     logger.setLevel(level=getattr(logging, args.log.upper(), None))
     # load graphMAE args
     if args.filling_method == "graphmae":
-        from graphmae.utils import build_args, load_best_configs
+        from graphmae.utils import build_args, load_best_configs, load_pretrained_model_path
 
         graphmae_args = build_args()
         if graphmae_args.use_cfg:
             graphmae_args = load_best_configs(args, "configs.yml")
-        graphmae_args.pretrained_model_path = args.pretrained_model_path
+
+        if args.pretrained_model_path is None:
+            graphmae_args.pretrained_model_path = load_pretrained_model_path(graphmae_args)
+        else:
+            graphmae_args.pretrained_model_path = args.pretrained_model_path
+
         run(args, graphmae_args)
     elif args.filling_method == "graphmae-t":
         from chem.util import load_args
+
         graphmae_args = load_args()
         graphmae_args.pretrained_model_path = args.pretrained_model_path
         run(args, graphmae_args)

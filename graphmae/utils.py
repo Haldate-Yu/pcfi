@@ -151,7 +151,7 @@ def build_args():
         "--feature_mask_type", type=str, help="Type of missing feature mask", default="uniform",
         choices=["uniform", "structural"],
     )
-    mae_parser.add_argument("--feature_missing_rate", type=float, help="Rate of node features missing", default=0.99)
+    # mae_parser.add_argument("--feature_missing_rate", type=float, help="Rate of node features missing", default=0.99)
 
     # load pretrained model
     mae_parser.add_argument("--pretrained_model_path", type=str)
@@ -178,15 +178,15 @@ def load_best_configs(args, path):
     return args
 
 
-def load_pretrained_model(mae_args):
+def load_pretrained_model_path(mae_args):
     pretrained_model_dir = "./pretrain_gmae/"
     file_name = mae_args.dataset + "_" + mae_args.encoder + "_" + mae_args.decoder + \
                 "_" + mae_args.feature_init_type + "_" + mae_args.feature_mask_type + \
-                "_" + str(mae_args.feature_missing_rate) + ".pt"
+                "_" + str(mae_args.mask_rate) + ".pt"
     model_path = pretrained_model_dir + file_name
     if not os.path.exists(model_path):
         logging.info("Pretrained model not found")
         return None
-    logging.info("Loading pretrained model from " + model_path)
-    model = torch.load(model_path)
-    return model
+    # logging.info("Loading pretrained model from " + model_path)
+    # model = torch.load(model_path)
+    return model_path
