@@ -148,8 +148,8 @@ def run(args, graphmae_args=None):
     test_auc_mean, test_auc_std = np.mean(aucs), np.std(aucs)
     test_ap_mean, test_ap_std = np.mean(aps), np.std(aps)
 
-    print(f"AUC Accuracy: {test_auc_mean * 100:.2f}% +- {test_auc_std * 100:.2f}")
-    print(f"AP Accuracy: {test_ap_mean * 100:.2f}% +- {test_ap_std * 100:.2f}")
+    print(f"AUC Accuracy: {test_auc_mean * 100:.2f} ± {test_auc_std * 100:.2f}")
+    print(f"AP Accuracy: {test_ap_mean * 100:.2f} ± {test_ap_std * 100:.2f}")
     # todo save to files
 
 
