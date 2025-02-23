@@ -60,8 +60,11 @@ def save_node_results(args, mae_args, test_acc_mean, test_acc_std):
         os.makedirs(node_result_dir)
 
     # parsing args
-    result_file_name = node_result_dir + args.dataset_name + '_' + args.mask_type + '_' + str(
-        args.missing_rate) + '.csv'
+    result_file_name = (node_result_dir +
+                        args.dataset_name + '_' +
+                        args.filling_method + '_' +
+                        args.mask_type + '_' +
+                        str(args.missing_rate) + '.csv')
 
     if args.filling_method == 'graphmae':
         header_list = ["filling_method", "downstream_model", "n_runs", "num_layers", "hidden_dim", "jk",
@@ -112,8 +115,11 @@ def save_link_results(args, mae_args, test_auc_mean, test_auc_std, test_ap_mean,
         os.makedirs(link_result_dir)
 
     # parsing args
-    result_file_name = link_result_dir + args.dataset_name + '_' + args.mask_type + '_' + str(
-        args.missing_rate) + '.csv'
+    result_file_name = (link_result_dir +
+                        args.dataset_name + '_' +
+                        args.filling_method + '_' +
+                        args.mask_type + '_' +
+                        str(args.missing_rate) + '.csv')
 
     if args.filling_method == 'graphmae':
         header_list = ["filling_method", "downstream_model", "n_runs", "num_layers", "hidden_dim", "jk",

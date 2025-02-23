@@ -10,7 +10,7 @@ import argparse
 import torch
 from data_loading import get_dataset
 from graphmae import build_model
-from utils import get_missing_feature_mask
+from utils import get_missing_feature_mask, save_link_results
 from seeds import seeds
 from utils_link import train, test
 import random
@@ -20,6 +20,10 @@ from torch_geometric.nn import GAE
 import logging
 from filling_strategies import filling
 from pcfi import pcfi
+import warnings
+
+# ignore user warnings
+warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser("Setting for graphs with partially known features")
 parser.add_argument(
@@ -150,7 +154,8 @@ def run(args, graphmae_args=None):
 
     print(f"AUC Accuracy: {test_auc_mean * 100:.2f} ± {test_auc_std * 100:.2f}")
     print(f"AP Accuracy: {test_ap_mean * 100:.2f} ± {test_ap_std * 100:.2f}")
-    # todo save to files
+    # save to files
+    save_link_results(args, graphmae_args, test_auc_mean, test_auc_std, test_ap_mean, test_ap_std)
 
 
 if __name__ == "__main__":

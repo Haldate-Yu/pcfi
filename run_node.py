@@ -21,6 +21,10 @@ from train import train
 import random
 from filling_strategies import filling
 from pcfi import pcfi
+import warnings
+
+# ignore user warnings
+warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser("Setting for graphs with partially known features")
 parser.add_argument(
@@ -135,7 +139,7 @@ def run(args, graphmae_args=None):
 
         num_classes = dataset.num_classes
         data = (set_train_val_test_split(
-            seed=seed, data=dataset.data, split_idx=split_idx, dataset_name=args.dataset_name,)
+            seed=seed, data=dataset.data, split_idx=split_idx, dataset_name=args.dataset_name, )
                 .to(device))
         train_start = time.time()
         if args.model == "lp":
