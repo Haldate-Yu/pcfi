@@ -80,6 +80,7 @@ class NormLayer(nn.Module):
 def build_args():
     mae_parser = argparse.ArgumentParser(description="GMAE")
     mae_parser.add_argument("--seeds", type=int, nargs="+", default=[42])
+    mae_parser.add_argument("--mae_seeds", type=int, nargs="+", default=[42])
     mae_parser.add_argument("--dataset", type=str, default="cora")
     mae_parser.add_argument("--device", type=int, default=-1)
     mae_parser.add_argument("--max_epoch", type=int, default=200,
@@ -178,11 +179,11 @@ def load_best_configs(args, path):
     return args
 
 
-def load_pretrained_model_path(mae_args):
+def load_pretrained_model_path(mae_args, mae_seed):
     pretrained_model_dir = "./pretrain_gmae/"
     file_name = mae_args.dataset + "_" + mae_args.encoder + "_" + mae_args.decoder + \
                 "_" + mae_args.feature_init_type + "_" + mae_args.feature_mask_type + \
-                "_" + str(mae_args.mask_rate) + ".pt"
+                "_" + str(mae_args.mask_rate) + "_" + str(mae_seed) + ".pt"
     model_path = pretrained_model_dir + file_name
     if not os.path.exists(model_path):
         logging.info("Pretrained model not found")

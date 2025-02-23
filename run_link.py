@@ -66,9 +66,11 @@ parser.add_argument("--jk", action="store_true", help="Whether to use the jumpin
 parser.add_argument(
     "--log", type=str, help="Log Level", default="INFO", choices=["DEBUG", "INFO", "WARNING"],
 )
+# MAE args
+parser.add_argument("--mae_seeds", type=int, nargs="+", default=[42])
 parser.add_argument("--pretrained_model_path", type=str)
 
-def run(args, graphmae_args=None):
+def run(args, graphmae_args=None, mae_seed=None):
     device = torch.device(
         f"cuda:{args.gpu_idx}"
         if torch.cuda.is_available() and not (args.dataset_name == "OGBN-Products" and args.model == "lp")
@@ -173,18 +175,26 @@ if __name__ == "__main__":
     logger.setLevel(level=getattr(logging, args.log.upper(), None))
     # load graphMAE args
     if args.filling_method == "graphmae":
-        from graphmae.utils import build_args, load_best_configs
+        from graphmae.utils import build_args, load_best_configs, load_pretrained_model_path
 
         graphmae_args = build_args()
         if graphmae_args.use_cfg:
             graphmae_args = load_best_configs(args, "configs.yml")
-        graphmae_args.pretrained_model_path = args.pretrained_model_path
-        run(args, graphmae_args)
+
+        for mae_seed in graphmae_args.mae_seeds:
+            if args.pretrained_model_path is None:
+                graphmae_args.pretrained_model_path = load_pretrained_model_path(graphmae_args, mae_seed)
+            else:
+                graphmae_args.pretrained_model_path = args.pretrained_model_path
+
+            run(args, graphmae_args, mae_seed)
     elif args.filling_method == "graphmae-t":
         from chem.util import load_args
 
         graphmae_args = load_args()
         graphmae_args.pretrained_model_path = args.pretrained_model_path
-        run(args, graphmae_args)
+
+        for mae_seed in graphmae_args.mae_seeds:
+            run(args, graphmae_args, mae_seed)
     else:
         run(args, None)

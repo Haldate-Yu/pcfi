@@ -104,7 +104,7 @@ class PCFI(torch.nn.Module):
                     v_0_to_now = torch.cat([v_0_to_now, v_d], dim=0)
                     d += 1
             print('\n ====== f_n2d is computed ======'.format(feat_dim=feat_dim))
-        return f_n2d
+        return f_n2d.to(edge_index.device)
 
     # Original
     def compute_edge_weight_c(self, edge_index, f_n2d, n_nodes):

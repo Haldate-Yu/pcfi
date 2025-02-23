@@ -90,10 +90,12 @@ parser.add_argument("--gpu_idx", type=int, help="Indexes of gpu to run program o
 parser.add_argument(
     "--log", type=str, help="Log Level", default="INFO", choices=["DEBUG", "INFO", "WARNING"],
 )
+# MAE args
+parser.add_argument("--mae_seeds", type=int, nargs="+", default=[42])
 parser.add_argument("--pretrained_model_path", type=str)
 
 
-def run(args, graphmae_args=None):
+def run(args, graphmae_args=None, mae_seed=None):
     logger.info(args)
 
     device = torch.device(
@@ -264,17 +266,20 @@ if __name__ == "__main__":
         if graphmae_args.use_cfg:
             graphmae_args = load_best_configs(args, "configs.yml")
 
-        if args.pretrained_model_path is None:
-            graphmae_args.pretrained_model_path = load_pretrained_model_path(graphmae_args)
-        else:
-            graphmae_args.pretrained_model_path = args.pretrained_model_path
+        for mae_seed in graphmae_args.mae_seeds:
+            if args.pretrained_model_path is None:
+                graphmae_args.pretrained_model_path = load_pretrained_model_path(graphmae_args, mae_seed)
+            else:
+                graphmae_args.pretrained_model_path = args.pretrained_model_path
 
-        run(args, graphmae_args)
+            run(args, graphmae_args, mae_seed)
     elif args.filling_method == "graphmae-t":
         from chem.util import load_args
 
         graphmae_args = load_args()
         graphmae_args.pretrained_model_path = args.pretrained_model_path
-        run(args, graphmae_args)
+
+        for mae_seed in graphmae_args.mae_seeds:
+            run(args, graphmae_args, mae_seed)
     else:
         run(args, None)

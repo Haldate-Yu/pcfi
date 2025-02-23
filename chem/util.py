@@ -39,6 +39,7 @@ def load_args():
     parser.add_argument('--input_model_file', type=str, default='', help='filename to read the model (if there is any)')
     parser.add_argument('--filename', type=str, default='', help='output filename')
     parser.add_argument('--seed', type=int, default=42, help="Seed for splitting the dataset.")
+    parser.add_argument("--mae_seeds", type=int, nargs="+", default=[42])
     parser.add_argument('--runseed', type=int, default=0, help="Seed for minibatch selection, random initialization.")
     parser.add_argument('--split', type=str, default="scaffold", help="random or scaffold or random_scaffold")
     parser.add_argument('--eval_train', type=int, default=0, help='evaluating training or not')
