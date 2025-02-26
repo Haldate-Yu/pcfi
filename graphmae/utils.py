@@ -156,6 +156,7 @@ def build_args():
 
     # load pretrained model
     mae_parser.add_argument("--pretrained_model_path", type=str)
+    mae_parser.add_argument("--task_type", type=str, default="transductive")
     mae_args = mae_parser.parse_args()
     return mae_args
 
@@ -180,8 +181,8 @@ def load_best_configs(args, path):
 
 
 def load_pretrained_model_path(mae_args, mae_seed):
-    pretrained_model_dir = "./pretrain_gmae/"
-    file_name = mae_args.dataset + "_" + mae_args.encoder + "_" + mae_args.decoder + \
+    pretrained_model_dir = "./pretrain_gmae/" + mae_args.task_type + "/"
+    file_name = mae_args.dataset.lower() + "_" + mae_args.encoder + "_" + mae_args.decoder + \
                 "_" + mae_args.feature_init_type + "_" + mae_args.feature_mask_type + \
                 "_" + str(mae_args.mask_rate) + "_" + str(mae_seed) + ".pt"
     model_path = pretrained_model_dir + file_name

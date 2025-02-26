@@ -54,6 +54,10 @@ parser.add_argument(
     default="feature_propagation",
     choices=["random", "zero", "mean", "neighborhood_mean", "feature_propagation", "pcfi", "graphmae"],
 )
+parser.add_argument(
+    "--feature_init_type", type=str, help="Type of missing feature mask", default="zero",
+    choices=["zero", "random"],
+)
 parser.add_argument("--missing_rate", type=float, help="Rate of node features missing", default=0.995)
 parser.add_argument(
     "--num_iterations", type=int, help="Number of diffusion iterations for feature reconstruction", default=100,
@@ -91,6 +95,8 @@ parser.add_argument(
     "--log", type=str, help="Log Level", default="INFO", choices=["DEBUG", "INFO", "WARNING"],
 )
 # MAE args
+parser.add_argument("--use_cfg", action="store_true")
+parser.add_argument("--task_type", type=str, default="transductive")
 parser.add_argument("--mae_seeds", type=int, nargs="+", default=[42])
 parser.add_argument("--pretrained_model_path", type=str)
 
@@ -263,14 +269,28 @@ if __name__ == "__main__":
         from graphmae.utils import build_args, load_best_configs, load_pretrained_model_path
 
         graphmae_args = build_args()
+        # loading mae args according to args
+        graphmae_args.use_cfg = args.use_cfg
+        graphmae_args.mae_seeds = args.mae_seeds
+        graphmae_args.feature_init_type = args.feature_init_type
+        graphmae_args.task_type = args.task_type
+        graphmae_args.dataset = args.dataset_name
+        graphmae_args.feature_mask_type = args.mask_type
+        graphmae_args.filling_method = args.filling_method
+        graphmae_args.missing_rate = args.missing_rate
         if graphmae_args.use_cfg:
-            graphmae_args = load_best_configs(args, "configs.yml")
+            graphmae_args = load_best_configs(graphmae_args, "configs.yml")
 
+        logging.info(f"Using graphMAE with args: {graphmae_args}")
         for mae_seed in graphmae_args.mae_seeds:
             if args.pretrained_model_path is None:
                 graphmae_args.pretrained_model_path = load_pretrained_model_path(graphmae_args, mae_seed)
             else:
                 graphmae_args.pretrained_model_path = args.pretrained_model_path
+
+            if args.pretrained_model_path is None:
+                logging.info("No pre-trained model found. Please specify the path using --pretrained_model_path")
+                continue
 
             run(args, graphmae_args, mae_seed)
     elif args.filling_method == "graphmae-t":

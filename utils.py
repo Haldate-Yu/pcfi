@@ -69,6 +69,7 @@ def save_node_results(args, mae_args, test_acc_mean, test_acc_std):
     if args.filling_method == 'graphmae':
         header_list = ["filling_method", "downstream_model", "n_runs", "num_layers", "hidden_dim", "jk",
                        "encoder", "decoder", "num_heads", "num_layers", "num_hidden", "residual", "sce_coef", "pooling",
+                       "pre_train_model", "task_type",
                        "acc_mean", "acc_std"]
     elif args.filling_method == 'pcfi':
         header_list = ["filling_method", "downstream_model", "n_runs", "num_layers", "hidden_dim", "jk",
@@ -86,10 +87,11 @@ def save_node_results(args, mae_args, test_acc_mean, test_acc_std):
             dw.writeheader()
 
         if args.filling_method == 'graphmae':
-            line = "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {:.5f}, {:.5f}\n".format(
+            line = "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {:.5f}, {:.5f}\n".format(
                 args.filling_method, args.model, args.n_runs, args.num_layers, args.hidden_dim, args.jk,
                 mae_args.encoder, mae_args.decoder, mae_args.num_heads, mae_args.num_layers, mae_args.num_hidden,
                 mae_args.residual, mae_args.alpha_l, mae_args.pooling,
+                mae_args.pre_train_model, mae_args.task_type,
                 test_acc_mean, test_acc_std)
         elif args.filling_method == 'pcfi':
             line = "{}, {}, {}, {}, {}, {}, {}, {}, {:.5f}, {:.5f}\n".format(
