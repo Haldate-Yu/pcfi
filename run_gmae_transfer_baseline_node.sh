@@ -8,7 +8,7 @@ else
 fi
 
 for dataset in "Cora" "CiteSeer" "PubMed" "OGBN-Arxiv"; do
-  for fill_method in "graphmae"; do
+  for fill_method in "graphmae-t"; do
     for feature_init_type in "random" "zero"; do
       for mask_type in "uniform" "structural"; do
         for model in "mlp" "sgc" "sage" "gcn" "gat" "gcnmf" "pagnn"; do

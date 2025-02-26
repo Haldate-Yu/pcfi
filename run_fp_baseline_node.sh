@@ -7,7 +7,7 @@ else
   device=$1
 fi
 
-for dataset in "Cora" "Citeseer" "Pubmed" "OGBN-Arxiv" "OGBN-Products" "Photo" "Computers"; do
+for dataset in "Cora" "CiteSeer" "PubMed" "OGBN-Arxiv" "OGBN-Products" "Photo" "Computers"; do
   for fill_method in "zero" "random" "mean" "neighborhood_mean" "feature_propagation" "pcfi"; do
     for mask_type in "uniform" "structural"; do
       for model in "mlp" "sgc" "sage" "gcn" "gat" "gcnmf" "pagnn"; do
