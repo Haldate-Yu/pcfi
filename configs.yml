@@ -9,7 +9,6 @@ cora:
   max_epoch: 1500
   max_epoch_f: 300
   mask_rate: 0.5
-  num_layers: 2
   encoder: gat
   decoder: gat
   activation: prelu
@@ -27,7 +26,6 @@ citeseer:
   lr_f: 0.01
   num_hidden: 512
   num_heads: 2
-  num_layers: 2
   weight_decay: 2e-5
   weight_decay_f: 0.01
   max_epoch: 300
@@ -51,7 +49,6 @@ pubmed:
   lr_f: 0.01
   num_hidden: 1024
   num_heads: 4
-  num_layers: 2
   weight_decay: 1e-5
   weight_decay_f: 1e-4
   max_epoch: 1000
@@ -160,7 +157,6 @@ IMDB-BINARY:
   optimizer: adam
   replace_rate: 0.0
   drop_edge_rate: 0.0
-  alpha_l: 1
   norm: batchnorm
   residual: False
   scheduler: False
@@ -184,7 +180,6 @@ IMDB-MULTI:
   optimizer: adam
   replace_rate: 0.0
   drop_edge_rate: 0.0
-  alpha_l: 1
   norm: batchnorm
   scheduler: False
   linear_prob: True
@@ -205,8 +200,6 @@ PROTEINS:
   loss_fn: sce
   optimizer: adam
   drop_edge_rate: 0.0
-  alpha_l: 1
-  norm: batchnorm
   scheduler: False
   linear_prob: True
   pooling: max
@@ -228,7 +221,6 @@ MUTAG:
   scheduler: False
   pooling: sum
   batch_size: 64
-  alpha_l: 2
   replace_rate: 0.1
   norm: batchnorm
   in_drop: 0.2
@@ -282,7 +274,6 @@ NCI1:
   scheduler: True
   pool: sum
   batch_size: 16
-  alpha_l: 2
   replace_rate: 0.1
   norm: batchnorm
   loss_fn: sce
