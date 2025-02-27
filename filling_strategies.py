@@ -48,16 +48,19 @@ def pcfi(edge_index, X, feature_mask, num_iterations=None, mask_type=None, alpha
     return propagation_model.propagate(x=X, edge_index=edge_index, mask=feature_mask, mask_type=mask_type)
 
 
-def GraphMAE(model, edge_index, X, feature_mask, num_iterations=None, mask_type=None):
-    mask_node_ids = torch.where(feature_mask.sum(dim=1) > 0)[0]
+def GraphMAE(model, edge_index, X, feature_mask, num_iterations=None, mask_type=None, use_only_encoder=False):
+    mask_node_ids = torch.where(feature_mask.sum(dim=1) == 0)[0]
     node_mask = torch.ones(X.shape[0], dtype=torch.bool)
     node_mask[mask_node_ids] = False
     # return reconstructed_X as filled
-    return model.missing_attr_prediction(X, edge_index, node_mask, mask_type).detach()
+    if use_only_encoder:
+        pass
+    else:
+        return model.missing_attr_prediction(X, edge_index, node_mask, mask_type).detach()
 
 
 def filling(filling_method, edge_index, X, feature_mask, num_iterations=None, mask_type=None, alpha=None, beta=None,
-            pretrained_model=None):
+            pretrained_model=None, use_only_encoder=False):
     if filling_method == "random":
         X_reconstructed = random_filling(X)
     elif filling_method == "zero":
@@ -72,7 +75,7 @@ def filling(filling_method, edge_index, X, feature_mask, num_iterations=None, ma
         X_reconstructed = pcfi(edge_index, X, feature_mask, num_iterations, mask_type,
                                alpha, beta)
     elif filling_method == "graphmae":
-        X_reconstructed = GraphMAE(pretrained_model, edge_index, X, feature_mask, num_iterations, mask_type)
+        X_reconstructed = GraphMAE(pretrained_model, edge_index, X, feature_mask, num_iterations, mask_type, use_only_encoder)
     else:
         raise ValueError(f"{filling_method} method not implemented")
     return X_reconstructed

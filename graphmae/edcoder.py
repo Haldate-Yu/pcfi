@@ -264,6 +264,7 @@ class PreModel(nn.Module):
 
         return return_x
 
+
     def embed(self, x, edge_index):
         rep = self.encoder(x, edge_index)
         return rep
