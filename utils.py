@@ -91,7 +91,7 @@ def save_node_results(args, mae_args, test_acc_mean, test_acc_std):
                 args.filling_method, args.model, args.n_runs, args.num_layers, args.hidden_dim, args.jk,
                 mae_args.encoder, mae_args.decoder, mae_args.num_heads, mae_args.num_layers, mae_args.num_hidden,
                 mae_args.residual, mae_args.alpha_l, mae_args.pooling,
-                mae_args.pre_train_model, mae_args.task_type,
+                mae_args.pretrained_model_name, mae_args.task_type,
                 test_acc_mean, test_acc_std)
         elif args.filling_method == 'pcfi':
             line = "{}, {}, {}, {}, {}, {}, {}, {}, {:.5f}, {:.5f}\n".format(

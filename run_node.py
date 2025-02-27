@@ -292,13 +292,13 @@ if __name__ == "__main__":
         if graphmae_args.use_cfg:
             graphmae_args = load_best_configs(graphmae_args, "configs.yml")
 
-        logging.info(f"Using graphMAE with args: {graphmae_args}\n")
         for mae_seed in graphmae_args.mae_seeds:
             logging.info(f"Running graphMAE with seed: {mae_seed}\n")
             if args.pretrained_model_path is None:
                 graphmae_args.pretrained_model_path = load_pretrained_model_path(graphmae_args, mae_seed)
             else:
                 graphmae_args.pretrained_model_path = args.pretrained_model_path
+            logging.info(f"Using graphMAE with args: {graphmae_args}\n")
 
             if graphmae_args.pretrained_model_path is None:
                 logging.info("No pre-trained model found. Please specify the path using --pretrained_model_path")
