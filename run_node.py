@@ -95,10 +95,10 @@ parser.add_argument(
     "--log", type=str, help="Log Level", default="INFO", choices=["DEBUG", "INFO", "WARNING"],
 )
 # MAE args
-parser.add_argument("--use_cfg", action="store_true")
 parser.add_argument("--task_type", type=str, default="transductive")
 parser.add_argument("--mae_seeds", type=int, nargs="+", default=[42])
 parser.add_argument("--pretrained_model_path", type=str)
+parser.add_argument("--use_only_encoder", action="store_true", help="Whether to use only encoder of GMAE")
 
 
 def run(args, graphmae_args=None, mae_seed=None):
@@ -109,7 +109,11 @@ def run(args, graphmae_args=None, mae_seed=None):
         if torch.cuda.is_available() else "cpu"
     )
 
-    dataset, evaluator = get_dataset(name=args.dataset_name, homophily=args.homophily)
+    if args.filling_method == "graphmae" or args.filling_method == "graphmae-t":
+        dataset, evaluator = get_dataset(name=args.dataset_name, use_lcc=False, homophily=args.homophily)
+    else:
+        dataset, evaluator = get_dataset(name=args.dataset_name, homophily=args.homophily)
+
     split_idx = dataset.get_idx_split() if hasattr(dataset, "get_idx_split") else None
     n_nodes, n_features = dataset.data.x.shape
     test_accs, best_val_accs, train_times = [], [], []
@@ -173,14 +177,14 @@ def run(args, graphmae_args=None, mae_seed=None):
                 graphMAE = build_model(graphmae_args)
                 # loading pre-trained model
                 model_params = graphMAE.state_dict()
-                print("original model params")
-                for model_key, model_value in model_params.items():
-                    print(model_key)
-
-                print("loaded model params")
-                state_dict = torch.load(graphmae_args.pretrained_model_path)
-                for key in list(state_dict.keys()):
-                    print(key)
+                # print("original model params")
+                # for model_key, model_value in model_params.items():
+                #     print(model_key)
+                #
+                # print("loaded model params")
+                # state_dict = torch.load(graphmae_args.pretrained_model_path)
+                # for key in list(state_dict.keys()):
+                #     print(key)
 
                 graphMAE.load_state_dict(torch.load(graphmae_args.pretrained_model_path, weights_only=True),
                                          strict=False)
@@ -201,6 +205,14 @@ def run(args, graphmae_args=None, mae_seed=None):
                                       drop_ratio=graphmae_args.dropout_ratio,
                                       graph_pooling=graphmae_args.graph_pooling, gnn_type=graphmae_args.gnn_type)
                 model.from_pretrained(graphmae_args.pretrained_model_path)
+
+                if graphmae_args.feature_init_type == "zero":
+                    x[~missing_feature_mask] = float(0)
+                elif graphmae_args.feature_init_type == "random":
+                    init_x = torch.randn_like(x)
+                    x[~missing_feature_mask] = init_x[~missing_feature_mask]
+                else:
+                    raise ValueError(f"{args.feature_init_type} not implemented!")
             else:
                 x[~missing_feature_mask] = float("nan")
 
@@ -209,7 +221,7 @@ def run(args, graphmae_args=None, mae_seed=None):
             # todo fill with GMAE
             filled_features = (
                 filling(args.filling_method, data.edge_index, x, missing_feature_mask, args.num_iterations,
-                        args.mask_type, args.alpha, args.beta, pretrained_gmae)
+                        args.mask_type, args.alpha, args.beta, pretrained_gmae, args.use_only_encoder)
                 if args.model not in ["gcnmf", "pagnn"]
                 else torch.full_like(x, float("nan"))
             )
@@ -231,7 +243,7 @@ def run(args, graphmae_args=None, mae_seed=None):
             test_acc = 0
             val_accs = []
             for epoch in range(0, args.epochs):
-                x = filled_features
+                x = torch.where(missing_feature_mask, data.x, filled_features)
                 train(
                     model, x, data, optimizer, criterion, train_loader=train_loader, device=device,
                 )
@@ -254,23 +266,22 @@ def run(args, graphmae_args=None, mae_seed=None):
         train_times.append(time.time() - train_start)
 
     test_acc_mean, test_acc_std = np.mean(test_accs), np.std(test_accs)
-    print(f"Test Accuracy: {test_acc_mean * 100:.2f} ± {test_acc_std * 100:.2f}\n")
+    logging.info(f"Test Accuracy: {test_acc_mean * 100:.2f} ± {test_acc_std * 100:.2f}\n")
     # save to file
     save_node_results(args, graphmae_args, test_acc_mean, test_acc_std)
 
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    print(args)
+    args = parser.parse_known_args()[0]
     logger = logging.getLogger(__name__)
     logger.setLevel(level=getattr(logging, args.log.upper(), None))
+    logging.info(f"Running with args: {args}\n")
     # load graphMAE args
     if args.filling_method == "graphmae":
         from graphmae.utils import build_args, load_best_configs, load_pretrained_model_path
 
         graphmae_args = build_args()
         # loading mae args according to args
-        graphmae_args.use_cfg = args.use_cfg
         graphmae_args.mae_seeds = args.mae_seeds
         graphmae_args.feature_init_type = args.feature_init_type
         graphmae_args.task_type = args.task_type
@@ -281,14 +292,15 @@ if __name__ == "__main__":
         if graphmae_args.use_cfg:
             graphmae_args = load_best_configs(graphmae_args, "configs.yml")
 
-        logging.info(f"Using graphMAE with args: {graphmae_args}")
+        logging.info(f"Using graphMAE with args: {graphmae_args}\n")
         for mae_seed in graphmae_args.mae_seeds:
+            logging.info(f"Running graphMAE with seed: {mae_seed}\n")
             if args.pretrained_model_path is None:
                 graphmae_args.pretrained_model_path = load_pretrained_model_path(graphmae_args, mae_seed)
             else:
                 graphmae_args.pretrained_model_path = args.pretrained_model_path
 
-            if args.pretrained_model_path is None:
+            if graphmae_args.pretrained_model_path is None:
                 logging.info("No pre-trained model found. Please specify the path using --pretrained_model_path")
                 continue
 

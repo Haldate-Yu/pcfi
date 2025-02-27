@@ -156,21 +156,24 @@ def build_args():
 
     # load pretrained model
     mae_parser.add_argument("--pretrained_model_path", type=str)
+    mae_parser.add_argument("--pretrained_model_name", type=str)
     mae_parser.add_argument("--task_type", type=str, default="transductive")
-    mae_args = mae_parser.parse_args()
+    mae_args = mae_parser.parse_known_args()[0]
     return mae_args
 
 
 def load_best_configs(args, path):
+    dataset = args.dataset.lower()
+
     with open(path, "r") as f:
         configs = yaml.load(f, yaml.FullLoader)
 
-    if args.dataset not in configs:
+    if dataset not in configs:
         logging.info("Best args not found")
         return args
 
     logging.info("Using best configs")
-    configs = configs[args.dataset]
+    configs = configs[dataset]
 
     for k, v in configs.items():
         if "lr" in k or "weight_decay" in k:
@@ -185,6 +188,7 @@ def load_pretrained_model_path(mae_args, mae_seed):
     file_name = mae_args.dataset.lower() + "_" + mae_args.encoder + "_" + mae_args.decoder + \
                 "_" + mae_args.feature_init_type + "_" + mae_args.feature_mask_type + \
                 "_" + str(mae_args.mask_rate) + "_" + str(mae_seed) + ".pt"
+    mae_args.pretrained_model_name = file_name
     model_path = pretrained_model_dir + file_name
     if not os.path.exists(model_path):
         logging.info("Pretrained model not found")

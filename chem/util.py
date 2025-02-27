@@ -66,7 +66,7 @@ def load_args():
 
     parser.add_argument("--pretrained_model_path", type=str)
 
-    return parser.parse_args()
+    return parser.parse_known_args()[0]
 
 
 def check_same_molecules(s1, s2):
