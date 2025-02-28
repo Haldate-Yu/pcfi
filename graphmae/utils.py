@@ -127,6 +127,7 @@ def build_args():
     mae_parser.add_argument("--load_model", action="store_true")
     mae_parser.add_argument("--save_model", action="store_true")
     mae_parser.add_argument("--use_cfg", action="store_true")
+    mae_parser.add_argument("--use_high_missing_cfg", action="store_true")
     mae_parser.add_argument("--logging", action="store_true")
     mae_parser.add_argument("--scheduler", action="store_true", default=False)
     mae_parser.add_argument("--concat_hidden", action="store_true", default=False)
@@ -187,7 +188,7 @@ def load_pretrained_model_path(mae_args, mae_seed):
     pretrained_model_dir = "./pretrain_gmae/" + mae_args.task_type + "/"
     file_name = mae_args.dataset.lower() + "_" + mae_args.encoder + "_" + mae_args.decoder + \
                 "_" + mae_args.feature_init_type + "_" + mae_args.feature_mask_type + \
-                "_" + str(mae_args.mask_rate) + "_" + str(mae_seed) + ".pt"
+                "_" + str(mae_args.missing_rate) + "_" + str(mae_seed) + ".pt"
     mae_args.pretrained_model_name = file_name
     model_path = pretrained_model_dir + file_name
     if not os.path.exists(model_path):

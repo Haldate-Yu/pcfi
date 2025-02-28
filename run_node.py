@@ -292,6 +292,9 @@ if __name__ == "__main__":
         graphmae_args.missing_rate = args.mae_missing_rate
         if graphmae_args.use_cfg:
             graphmae_args = load_best_configs(graphmae_args, "configs.yml")
+        elif graphmae_args.use_high_missing_cfg:
+            graphmae_args = load_best_configs(graphmae_args, "high_missing_configs.yml")
+
 
         for mae_seed in graphmae_args.mae_seeds:
             logging.info(f"Running graphMAE with seed: {mae_seed}\n")
