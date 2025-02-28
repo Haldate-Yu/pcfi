@@ -95,6 +95,7 @@ parser.add_argument(
     "--log", type=str, help="Log Level", default="INFO", choices=["DEBUG", "INFO", "WARNING"],
 )
 # MAE args
+parser.add_argument("--mae_missing_rate", type=float, default=0.5)
 parser.add_argument("--task_type", type=str, default="transductive")
 parser.add_argument("--mae_seeds", type=int, nargs="+", default=[42])
 parser.add_argument("--pretrained_model_path", type=str)
@@ -288,7 +289,7 @@ if __name__ == "__main__":
         graphmae_args.dataset = args.dataset_name
         graphmae_args.feature_mask_type = args.mask_type
         graphmae_args.filling_method = args.filling_method
-        graphmae_args.missing_rate = args.missing_rate
+        graphmae_args.missing_rate = args.mae_missing_rate
         if graphmae_args.use_cfg:
             graphmae_args = load_best_configs(graphmae_args, "configs.yml")
 
@@ -298,7 +299,9 @@ if __name__ == "__main__":
                 graphmae_args.pretrained_model_path = load_pretrained_model_path(graphmae_args, mae_seed)
             else:
                 graphmae_args.pretrained_model_path = args.pretrained_model_path
+                graphmae_args.pretrained_model_name = args.pretrained_model_path
             logging.info(f"Using graphMAE with args: {graphmae_args}\n")
+            logging.info(f"Using graphMAE with pre-trained model: {graphmae_args.pretrained_model_path}\n")
 
             if graphmae_args.pretrained_model_path is None:
                 logging.info("No pre-trained model found. Please specify the path using --pretrained_model_path")

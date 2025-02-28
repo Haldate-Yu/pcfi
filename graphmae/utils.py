@@ -179,7 +179,7 @@ def load_best_configs(args, path):
         if "lr" in k or "weight_decay" in k:
             v = float(v)
         setattr(args, k, v)
-    print("------ Use best configs ------")
+    logging.info("------ Use best configs ------")
     return args
 
 

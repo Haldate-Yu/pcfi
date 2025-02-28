@@ -13,7 +13,7 @@ for dataset in "Cora" "CiteSeer" "OGBN-Arxiv"; do
       for mask_type in "uniform" "structural"; do
         for model in "mlp" "sgc" "sage" "gcn" "gat" "gcnmf" "pagnn"; do
           for task_type in "transductive"; do
-            python run_node.py --dataset_name $dataset \
+            python run_link.py --dataset_name $dataset \
             --filling_method $fill_method \
             --feature_init_type $feature_init_type \
             --mask_type $mask_type \
@@ -37,7 +37,7 @@ for dataset in "PubMed"; do
       for mask_type in "uniform" "structural"; do
         for model in "mlp" "sgc" "sage" "gcn" "gat" "gcnmf" "pagnn"; do
           for task_type in "transductive"; do
-            python run_node.py --dataset_name $dataset \
+            python run_link.py --dataset_name $dataset \
             --filling_method $fill_method \
             --feature_init_type $feature_init_type \
             --mask_type $mask_type \
