@@ -55,7 +55,7 @@ parser.add_argument(
     choices=["zero", "random"],
 )
 parser.add_argument("--gpu_idx", type=int, help="Indexes of gpu to run program on", default=0)
-parser.add_argument("--missing_rate", type=float, help="Rate of node features missing", default=0.995)
+parser.add_argument("--missing_rate", type=float, help="Rate of node features missing", default=0.9)
 parser.add_argument(
     "--num_iterations", type=int, help="Number of diffusion iterations for feature reconstruction", default=100,
 )
@@ -135,10 +135,6 @@ def run(args, graphmae_args=None, mae_seed=None):
                 x[~missing_feature_mask] = init_x[~missing_feature_mask]
             else:
                 raise ValueError(f"{args.feature_init_type} not implemented!")
-        elif args.filling_method == "graphmae-t":
-            # todo load transfer learning graphMAE
-
-            pass
         else:
             x[~missing_feature_mask] = float("nan")
 
@@ -212,14 +208,6 @@ if __name__ == "__main__":
                 logging.info("No pre-trained model found. Please specify the path using --pretrained_model_path")
                 continue
 
-            run(args, graphmae_args, mae_seed)
-    elif args.filling_method == "graphmae-t":
-        from chem.util import load_args
-
-        graphmae_args = load_args()
-        graphmae_args.pretrained_model_path = args.pretrained_model_path
-
-        for mae_seed in graphmae_args.mae_seeds:
             run(args, graphmae_args, mae_seed)
     else:
         run(args, None)

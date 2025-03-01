@@ -58,7 +58,7 @@ parser.add_argument(
     "--feature_init_type", type=str, help="Type of missing feature mask", default="zero",
     choices=["zero", "random"],
 )
-parser.add_argument("--missing_rate", type=float, help="Rate of node features missing", default=0.995)
+parser.add_argument("--missing_rate", type=float, help="Rate of node features missing", default=0.9)
 parser.add_argument(
     "--num_iterations", type=int, help="Number of diffusion iterations for feature reconstruction", default=100,
 )
@@ -110,7 +110,7 @@ def run(args, graphmae_args=None, mae_seed=None):
         if torch.cuda.is_available() else "cpu"
     )
 
-    if args.filling_method == "graphmae" or args.filling_method == "graphmae-t":
+    if args.filling_method == "graphmae":
         dataset, evaluator = get_dataset(name=args.dataset_name, use_lcc=False, homophily=args.homophily)
     else:
         dataset, evaluator = get_dataset(name=args.dataset_name, homophily=args.homophily)
@@ -177,7 +177,7 @@ def run(args, graphmae_args=None, mae_seed=None):
                 graphmae_args.num_features = n_features
                 graphMAE = build_model(graphmae_args)
                 # loading pre-trained model
-                model_params = graphMAE.state_dict()
+                # model_params = graphMAE.state_dict()
                 # print("original model params")
                 # for model_key, model_value in model_params.items():
                 #     print(model_key)
@@ -192,20 +192,6 @@ def run(args, graphmae_args=None, mae_seed=None):
                 pretrained_gmae = graphMAE.to(device)
                 # GMAE feature init method
                 # todo define as a refinement
-
-                if graphmae_args.feature_init_type == "zero":
-                    x[~missing_feature_mask] = float(0)
-                elif graphmae_args.feature_init_type == "random":
-                    init_x = torch.randn_like(x)
-                    x[~missing_feature_mask] = init_x[~missing_feature_mask]
-                else:
-                    raise ValueError(f"{args.feature_init_type} not implemented!")
-            elif args.filling_method == "graphmae-t":
-                # todo load transfer learning graphMAE
-                model = GNN_graphpred(graphmae_args.num_layer, graphmae_args.emb_dim, num_classes, JK=graphmae_args.JK,
-                                      drop_ratio=graphmae_args.dropout_ratio,
-                                      graph_pooling=graphmae_args.graph_pooling, gnn_type=graphmae_args.gnn_type)
-                model.from_pretrained(graphmae_args.pretrained_model_path)
 
                 if graphmae_args.feature_init_type == "zero":
                     x[~missing_feature_mask] = float(0)
@@ -310,14 +296,6 @@ if __name__ == "__main__":
                 logging.info("No pre-trained model found. Please specify the path using --pretrained_model_path")
                 continue
 
-            run(args, graphmae_args, mae_seed)
-    elif args.filling_method == "graphmae-t":
-        from chem.util import load_args
-
-        graphmae_args = load_args()
-        graphmae_args.pretrained_model_path = args.pretrained_model_path
-
-        for mae_seed in graphmae_args.mae_seeds:
             run(args, graphmae_args, mae_seed)
     else:
         run(args, None)
