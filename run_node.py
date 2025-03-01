@@ -273,7 +273,7 @@ if __name__ == "__main__":
         graphmae_args.feature_init_type = args.feature_init_type
         graphmae_args.task_type = args.task_type
         graphmae_args.dataset = args.dataset_name
-        graphmae_args.feature_mask_type = args.mask_type
+        # graphmae_args.feature_mask_type = args.mask_type
         graphmae_args.filling_method = args.filling_method
         graphmae_args.missing_rate = args.mae_missing_rate
         if graphmae_args.use_cfg:
