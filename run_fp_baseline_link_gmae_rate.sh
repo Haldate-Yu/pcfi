@@ -7,7 +7,7 @@ else
   device=$1
 fi
 
-for dataset in "Cora" "CiteSeer" "PubMed"; do
+for dataset in "Cora" "CiteSeer"; do
   for fill_method in "zero" "random" "mean" "neighborhood_mean" "feature_propagation" "pcfi"; do
     for mask_type in "uniform" "structural"; do
       python run_link.py --dataset_name $dataset \
