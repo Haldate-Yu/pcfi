@@ -4,7 +4,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 import torch
 import torch_sparse
-
+from torch.nn.functional import normalize
 from feature_propagation import FeaturePropagation
 from pcfi import PCFI
 
@@ -64,7 +64,7 @@ def GraphMAE(model, edge_index, X, feature_mask, num_iterations=None, mask_type=
 
 
 def filling(filling_method, edge_index, X, feature_mask, num_iterations=None, mask_type=None, alpha=None, beta=None,
-            pretrained_model=None, use_only_encoder=False):
+            pretrained_model=None, use_only_encoder=False, normalize_type=None):
     if filling_method == "random":
         X_reconstructed = random_filling(X)
     elif filling_method == "zero":
@@ -79,7 +79,14 @@ def filling(filling_method, edge_index, X, feature_mask, num_iterations=None, ma
         X_reconstructed = pcfi(edge_index, X, feature_mask, num_iterations, mask_type,
                                alpha, beta)
     elif filling_method == "graphmae":
-        X_reconstructed = GraphMAE(pretrained_model, edge_index, X, feature_mask, num_iterations, mask_type, use_only_encoder)
+        X_reconstructed = GraphMAE(pretrained_model, edge_index, X, feature_mask, num_iterations, mask_type,
+                                   use_only_encoder)
+        # normalize or gdc
+        if normalize_type == "l1":
+            X_reconstructed = normalize(X_reconstructed, p=1, dim=1)
+        elif normalize_type == "l2":
+            X_reconstructed = normalize(X_reconstructed, p=2, dim=1)
+
     else:
         raise ValueError(f"{filling_method} method not implemented")
     return X_reconstructed

@@ -72,6 +72,11 @@ parser.add_argument(
 )
 # MAE args
 parser.add_argument("--mae_missing_rate", type=float, default=0.5)
+parser.add_argument(
+    "--mae_feature_mask_type", type=str, help="Type of missing feature mask", default="original",
+    choices=["uniform", "structural", "original"],
+)
+parser.add_argument("--normalize_type", type=str, default="none", choices=["none", "l1", "l2", "gdc"])
 parser.add_argument("--use_cfg", action="store_true")
 parser.add_argument("--task_type", type=str, default="transductive")
 parser.add_argument("--mae_seeds", type=int, nargs="+", default=[42])
@@ -142,7 +147,8 @@ def run(args, graphmae_args=None, mae_seed=None):
         #                        args.alpha, args.beta).to(device)
         filled_features = (
             filling(args.filling_method, data.train_pos_edge_index, x, missing_feature_mask, args.num_iterations,
-                    args.mask_type, args.alpha, args.beta, pretrained_gmae).to(device)
+                    args.mask_type, args.alpha, args.beta, pretrained_gmae,
+                    args.normalize_type).to(device)
         )
 
         data = data.to(device)

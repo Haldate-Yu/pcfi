@@ -97,6 +97,11 @@ parser.add_argument(
 # MAE args
 parser.add_argument("--mae_missing_rate", type=float, default=0.5)
 parser.add_argument("--task_type", type=str, default="transductive")
+parser.add_argument(
+    "--mae_feature_mask_type", type=str, help="Type of missing feature mask", default="original",
+    choices=["uniform", "structural", "original"],
+)
+parser.add_argument("--normalize_type", type=str, default="none", choices=["none", "l1", "l2", "gdc"])
 parser.add_argument("--mae_seeds", type=int, nargs="+", default=[42])
 parser.add_argument("--pretrained_model_path", type=str)
 parser.add_argument("--use_only_encoder", action="store_true", help="Whether to use only encoder of GMAE")
@@ -208,7 +213,8 @@ def run(args, graphmae_args=None, mae_seed=None):
             # todo fill with GMAE
             filled_features = (
                 filling(args.filling_method, data.edge_index, x, missing_feature_mask, args.num_iterations,
-                        args.mask_type, args.alpha, args.beta, pretrained_gmae, args.use_only_encoder)
+                        args.mask_type, args.alpha, args.beta, pretrained_gmae, args.use_only_encoder,
+                        args.normalize_type)
                 if args.model not in ["gcnmf", "pagnn"]
                 else torch.full_like(x, float("nan"))
             )
@@ -280,7 +286,6 @@ if __name__ == "__main__":
             graphmae_args = load_best_configs(graphmae_args, "configs.yml")
         elif graphmae_args.use_high_missing_cfg:
             graphmae_args = load_best_configs(graphmae_args, "high_missing_configs.yml")
-
 
         for mae_seed in graphmae_args.mae_seeds:
             logging.info(f"Running graphMAE with seed: {mae_seed}\n")
