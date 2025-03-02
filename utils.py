@@ -12,9 +12,15 @@ from torch_scatter import scatter_add
 def get_missing_feature_mask(rate, n_nodes, n_features, seed, type="uniform"):
     """ 
     Return mask of shape [n_nodes, n_features] indicating whether each feature is present or missing.
+
     If `type`='uniform', then each feature of each node is missing uniformly at random with probability `rate`.
-    Instead, if `type`='structural', either we observe all features for a node, or we observe none. For each node
-    there is a probability of `rate` of not observing any feature. 
+    Instead;
+
+    if `type`='structural', either we observe all features for a node, or we observe none. For each node
+    there is a probability of `rate` of not observing any feature.
+
+    features with 'True' mask keep their original values,
+    while features with 'False' mask will be changed according to fill method.
     """
     torch.manual_seed(seed)
     if type == "structural":  # either remove all of a nodes features or none
