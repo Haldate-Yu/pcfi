@@ -237,27 +237,27 @@ class PreModel(nn.Module):
         use_x = x.clone()
         return_x = x.clone()
 
-        if self._drop_edge_rate > 0:
-            use_edge_index, masked_edges = dropout_edge(edge_index, self._drop_edge_rate)
-            use_edge_index = add_self_loops(use_edge_index)[0]
-        else:
-            use_edge_index = edge_index
+        # if self._drop_edge_rate > 0:
+        #     use_edge_index, masked_edges = dropout_edge(edge_index, self._drop_edge_rate)
+        #     use_edge_index = add_self_loops(use_edge_index)[0]
+        # else:
+        #     use_edge_index = edge_index
 
-        enc_rep, all_hidden = self.encoder(use_x, use_edge_index, return_hidden=True)
+        enc_rep, all_hidden = self.encoder(use_x, edge_index, return_hidden=True)
         if self._concat_hidden:
             enc_rep = torch.cat(all_hidden, dim=1)
 
         # ---- attribute reconstruction ----
         rep = self.encoder_to_decoder(enc_rep)
 
-        if self._decoder_type not in ("mlp", "linear"):
+        # if self._decoder_type not in ("mlp", "linear"):
             # * remask, re-mask
-            rep[~mask] = 0
+            # rep[~mask] = 0
 
         if self._decoder_type in ("mlp", "linear"):
             recon = self.decoder(rep)
         else:
-            recon = self.decoder(rep, use_edge_index)
+            recon = self.decoder(rep, edge_index)
 
         # only fill masked nodes
         return_x[~mask] = recon[~mask]
